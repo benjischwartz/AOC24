@@ -1,21 +1,22 @@
 #include <cassert>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
 
 std::string XMAS = "XMAS";
-template <typename Callable>
+
 bool func(std::vector<std::vector<char>> &matrix, std::pair<int, int> coords,
-          int idx, Callable update_lambda)
+          int idx, std::function<std::pair<int, int>(int, int)> update_func)
 {
     if (idx == 4) return true;
     if (coords.first < 0 || coords.first >= matrix.size() ||
         coords.second < 0 || coords.second >= matrix[0].size() ||
         matrix[coords.first][coords.second] != XMAS[idx])
         return false;
-    return func(matrix, update_lambda(coords.first, coords.second), idx + 1,
-                update_lambda);
+    return func(matrix, update_func(coords.first, coords.second), idx + 1,
+                update_func);
 }
 
 int main()

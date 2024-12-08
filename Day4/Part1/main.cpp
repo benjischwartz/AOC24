@@ -1,6 +1,5 @@
 #include <cassert>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -8,7 +7,7 @@
 std::string XMAS = "XMAS";
 
 bool func(std::vector<std::vector<char>> &matrix, std::pair<int, int> coords,
-          int idx, std::function<std::pair<int, int>(int, int)> update_func)
+          int idx, std::pair<int, int> (*update_func)(int, int))
 {
     if (idx == 4) return true;
     if (coords.first < 0 || coords.first >= matrix.size() ||

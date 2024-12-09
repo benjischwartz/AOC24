@@ -11,6 +11,11 @@ enum Direction {
     Right,
 };
 
+inline void update_coordinates(std::vector<std::vector<char>> &grid, int &x,
+                               int &y, Direction &direction);
+
+void create_output_file(std::vector<std::vector<char>> &grid);
+
 namespace std {
 
 template <>
@@ -47,7 +52,7 @@ int main()
 
     // If we encounter {x, y, dir} in set, we have a cycle
     std::unordered_set<std::tuple<int, int, int>> pos_dirs;
-    std::pair<int, int> start_pos; /* {row = x, col = y} */
+    std::pair<int, int> start_pos; /* {col = x, row = y} */
 
     // Parse grid
     char c;
@@ -61,71 +66,85 @@ int main()
         grid.push_back(std::move(row));
     }
 
-    int obstacle_counter = 0;
-
-    for (int i = 0; i < grid.size(); ++i) {
-        for (int j = 0; j < grid[0].size(); ++j) {
-            if (grid[i][j] == '#' || grid[i][j] == '^') continue;
-
-            // Place obstacle
-            grid[i][j] = '#';
-
-            // Run guard path
-            int x = start_pos.first;
-            int y = start_pos.second;
-            Direction direction = Direction::Up;
-            pos_dirs.clear();
-            while (x >= 0 && x < grid[0].size() && y >= 0 && y < grid.size()) {
-                // Cycle detected
-                if (pos_dirs.count({x, y, direction})) {
-                    ++obstacle_counter;
-                    break;
-                };
-
-                pos_dirs.insert({x, y, direction});
-
-                switch (direction) {
-                    case Direction::Up:
-                        if (y > 0 && grid[y - 1][x] == '#') {
-                            direction = Direction::Right;
-                        }
-                        else {
-                            --y;
-                        }
-                        break;
-                    case Direction::Down:
-                        if (y < grid.size() - 1 && grid[y + 1][x] == '#') {
-                            direction = Direction::Left;
-                        }
-                        else {
-                            ++y;
-                        }
-                        break;
-                    case Direction::Left:
-                        if (x > 0 && grid[y][x - 1] == '#') {
-                            direction = Direction::Up;
-                        }
-                        else {
-                            --x;
-                        }
-                        break;
-                    case Direction::Right:
-                        if (x < grid[0].size() - 1 && grid[y][x + 1] == '#') {
-                            direction = Direction::Down;
-                        }
-                        else {
-                            ++x;
-                        }
-                        break;
-                };
-            }
-
-            // Remove obstacle
-            grid[i][j] = '.';
-        }
+    // Get guard's path
+    std::unordered_set<std::pair<int, int>> path;
+    int x = start_pos.first;
+    int y = start_pos.second;
+    Direction direction = Direction::Up;
+    while (x >= 0 && x < grid[0].size() && y >= 0 && y < grid.size()) {
+        path.insert({x, y});
+        update_coordinates(grid, x, y, direction);
     }
-    grid[start_pos.second][start_pos.first] = 'S';
 
+    // Place obstacles on guard's path
+    int obstacle_counter = 0;
+    for (std::pair<int, int> p : path) {
+        int i = p.second;
+        int j = p.first;
+        if (grid[i][j] == '#' || grid[i][j] == '^') continue;
+        grid[i][j] = '#';
+        int x = start_pos.first;
+        int y = start_pos.second;
+        Direction direction = Direction::Up;
+        pos_dirs.clear();
+        while (x >= 0 && x < grid[0].size() && y >= 0 && y < grid.size()) {
+            if (pos_dirs.count({x, y, direction})) {
+                ++obstacle_counter;
+                break;
+            };
+            pos_dirs.insert({x, y, direction});
+            update_coordinates(grid, x, y, direction);
+        }
+        grid[i][j] = '.';
+    }
+    grid[start_pos.second][start_pos.first] = '^';
+
+    create_output_file(grid);
+
+    std::cout << "Obstacles: " << obstacle_counter << '\n';
+}
+
+inline void update_coordinates(std::vector<std::vector<char>> &grid, int &x,
+                               int &y, Direction &direction)
+{
+    switch (direction) {
+        case Direction::Up:
+            if (y > 0 && grid[y - 1][x] == '#') {
+                direction = Direction::Right;
+            }
+            else {
+                --y;
+            }
+            break;
+        case Direction::Down:
+            if (y < grid.size() - 1 && grid[y + 1][x] == '#') {
+                direction = Direction::Left;
+            }
+            else {
+                ++y;
+            }
+            break;
+        case Direction::Left:
+            if (x > 0 && grid[y][x - 1] == '#') {
+                direction = Direction::Up;
+            }
+            else {
+                --x;
+            }
+            break;
+        case Direction::Right:
+            if (x < grid[0].size() - 1 && grid[y][x + 1] == '#') {
+                direction = Direction::Down;
+            }
+            else {
+                ++x;
+            }
+            break;
+    };
+}
+
+void create_output_file(std::vector<std::vector<char>> &grid)
+{
     std::ofstream ofs("output.txt");
     for (auto row : grid) {
         for (auto cell : row) {
@@ -133,6 +152,4 @@ int main()
         }
         ofs << '\n';
     }
-
-    std::cout << "Obstacles: " << obstacle_counter << '\n';
 }

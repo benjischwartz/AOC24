@@ -11,7 +11,8 @@ struct LineStruct {
     std::vector<int> nums;
 };
 
-bool dfs(std::vector<int> &nums, int idx, long total, long target);
+bool dfs(std::vector<int> &nums, int idx, long total, long target,
+         std::string ops);
 
 inline int countDigits(int n)
 {
@@ -45,16 +46,25 @@ int main(int argc, char *argv[])
         lines.push_back(std::move(ls));
     }
 
+    std::ofstream ofs;
+    ofs.open("output.txt");
     long total = 0;
     for (auto ls : lines) {
-        if (dfs(ls.nums, 0, 0, ls.target)) total += ls.target;
+        if (dfs(ls.nums, 1, ls.nums[0], ls.target, "")) {
+            ofs << "True\n";
+            total += ls.target;
+        }
+        else {
+            ofs << "False\n";
+        }
     }
 
     std::cout << "Result: " << total << '\n';
     return 0;
 }
 
-bool dfs(std::vector<int> &nums, int idx, long total, long target)
+bool dfs(std::vector<int> &nums, int idx, long total, long target,
+         std::string ops)
 {
     /*
     std::cout << "idx: " << idx << std::endl;
@@ -64,10 +74,13 @@ bool dfs(std::vector<int> &nums, int idx, long total, long target)
         return false;
     }
     if (idx == nums.size() && total == target) {
+        std::cout << "target: " << target << "\n";
+        std::cout << "ops used: " << ops << "\n";
         return true;
     }
-    return dfs(nums, idx + 1, total + nums[idx], target) ||
-           dfs(nums, idx + 1, total * nums[idx], target) ||
+    return dfs(nums, idx + 1, total + nums[idx], target, ops + " +") ||
+           dfs(nums, idx + 1, total * nums[idx], target, ops + " *") ||
            dfs(nums, idx + 1,
-               total * pow(10, countDigits(nums[idx])) + nums[idx], target);
+               total * pow(10, countDigits(nums[idx])) + nums[idx], target,
+               ops + " ||");
 }
